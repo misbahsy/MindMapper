@@ -5,7 +5,7 @@ import mermaid from 'mermaid'
 import { NodeData } from '@/app/types/types'
 import { Button } from '@/components/ui/button'
 import { toPng } from 'html-to-image'
-import { Download, ZoomIn, ZoomOut, RefreshCw } from 'lucide-react'
+import { Download, ZoomIn, ZoomOut, RefreshCw, Maximize2, Minimize2 } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'
 
 interface MindMapProps {
@@ -31,6 +31,7 @@ export default function MindMap({ data, onNodeClick }: MindMapProps) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 })
+  const [isFullScreen, setIsFullScreen] = useState(false)
 
   // Generate a unique ID for detail nodes
   const generateDetailNodeId = (nodeId: string, index: number = 0) => `${nodeId}_detail_${index}`
@@ -403,6 +404,18 @@ export default function MindMap({ data, onNodeClick }: MindMapProps) {
     }
   }
 
+  // Toggle full screen
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen)
+    // Reset zoom and position when toggling full screen
+    setZoomLevel(1)
+    setPosition({ x: 0, y: 0 })
+    if (containerRef.current) {
+      containerRef.current.scrollLeft = 0
+      containerRef.current.scrollTop = 0
+    }
+  }
+
   // Mind Map empty state
   if (!data.id || !data.children?.length) {
     return (
@@ -419,7 +432,7 @@ export default function MindMap({ data, onNodeClick }: MindMapProps) {
   }
 
   return (
-    <div className="w-full h-full flex flex-col bg-white">
+    <div className={`flex flex-col ${isFullScreen ? 'fixed inset-0 z-50 bg-white' : 'w-full h-full'}`}>
       <div className="flex justify-between p-2 border-b">
         <div className="flex items-center gap-2">
           <Button 
@@ -453,18 +466,29 @@ export default function MindMap({ data, onNodeClick }: MindMapProps) {
             Zoom: {Math.round(zoomLevel * 100)}%
           </div>
         </div>
-        <Button 
-          onClick={downloadImage} 
-          disabled={!isRendered}
-          className="flex items-center gap-2"
-        >
-          <Download size={16} />
-          Download
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={toggleFullScreen} 
+            variant="outline" 
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            {isFullScreen ? 'Exit Full Screen' : 'Full Screen'}
+          </Button>
+          <Button 
+            onClick={downloadImage} 
+            disabled={!isRendered}
+            className="flex items-center gap-2"
+          >
+            <Download size={16} />
+            Download
+          </Button>
+        </div>
       </div>
       <div 
         ref={containerRef} 
-        className="w-full h-full overflow-auto bg-white p-4 cursor-grab"
+        className={`w-full overflow-auto bg-white p-4 cursor-grab ${isFullScreen ? 'flex-1' : 'h-full'}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

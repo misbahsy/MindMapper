@@ -48,15 +48,25 @@ export async function generateMindMap(input: string): Promise<NodeData> {
 
     const data: ApiResponse = await response.json()
     
+    // Log the full response for debugging
+    console.log('Full API response:', JSON.stringify(data, null, 2))
+    
     // Extract the JSON string from the nested response
-    const mindMapJsonString = data.outputs[0].outputs[0].outputs.message.message.text
+    const mindMapJsonString = data.outputs[0].outputs[0].results.message.text
+    
+    if (!mindMapJsonString) {
+      throw new Error('No mind map data received from API')
+    }
     
     // Parse the JSON string into an object
     const parsedData: NodeData = JSON.parse(mindMapJsonString)
-    console.log(parsedData)
+    console.log('Parsed mind map data:', parsedData)
     return parsedData
   } catch (error) {
     console.error('Error calling API:', error)
+    if (error instanceof SyntaxError) {
+      console.error('Invalid JSON received:', error.message)
+    }
     throw error
   }
 } 
